@@ -74,6 +74,9 @@ tracks/1/keys = {
 
 [node name="Agency" type="Node"]
 script = ExtResource( 5 )
+__meta__ = {
+"_editor_description_": "This is the background used in all level one scenes"
+}
 next_scene = ExtResource( 6 )
 
 [node name="TextureRect" type="TextureRect" parent="."]
