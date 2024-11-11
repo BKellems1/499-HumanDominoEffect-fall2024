@@ -30,6 +30,9 @@ var keys = []
 # Name for my player.
 var player_name = "Player"
 
+# Number of CPUs desired to include
+var cpuNum = 5
+
 
 
 
@@ -151,7 +154,7 @@ func _player_connected(id):
 	rpc_id(1, "get_level")
 	rpc_id(1, "get_random_seed")
 	
-	rpc("register_player", player_name)
+	rpc("register_player", player_name,0)
 
 # Callback from SceneTree.
 func _player_disconnected(id):
@@ -182,8 +185,8 @@ func _connected_fail():
 
 
 # Lobby management functions.
-remotesync func register_player(new_player_name):
-	var id = get_tree().get_rpc_sender_id()
+remotesync func register_player(new_player_name,cpunum):
+	var id = get_tree().get_rpc_sender_id()+cpunum
 	var CharacterFound = false
 	players[id] = new_player_name
 	if(SaveManager.loaded_data):
@@ -223,15 +226,21 @@ func unregister_player(id):
 	players.erase(id)
 	emit_signal("player_list_changed")
 
-
+# important for CPU loading!
 remote func pre_start_game():
 	# Change scene.
 #	print(players)
-
 	if not get_tree().is_network_server():
 		# Tell server we are ready to start.
 		rpc_id(1, "ready_to_start", get_tree().get_network_unique_id())
 	elif players.size() == 1:
+		
+		# small loop to add CPUs with unique names and ids
+		var cpusAdded = 0
+		while cpusAdded < cpuNum and players.size() < 6:
+			register_player("CPU_"+str(players.size()),players.size()+1)
+			cpusAdded=cpusAdded+1
+		
 		post_start_game()
 
 
@@ -257,11 +266,14 @@ remote func ready_to_start(id):
 
 	if not id in players_ready:
 		players_ready.append(id)
-
+		
+	
+	
 	if players_ready.size() == players.size()-1:
 		for p in players:
 			if p != get_tree().get_network_unique_id():
 				rpc_id(p, "post_start_game")
+		
 		post_start_game()
 
 func host_game(new_player_name):
@@ -272,7 +284,7 @@ func host_game(new_player_name):
 	
 	var id = get_tree().get_network_unique_id()
 	
-	rpc("register_player", player_name)
+	rpc("register_player", player_name,0)
 
 func join_game(ip, new_player_name):
 	player_name = new_player_name
