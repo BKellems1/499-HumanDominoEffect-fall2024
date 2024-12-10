@@ -31,7 +31,9 @@ var keys = []
 var player_name = "Player"
 
 # Number of CPUs desired to include
-var cpuNum = 5
+# Warning: will softlock scenes besides the Domino Game
+# Until problem is fixed, only set value above one when starting in the Domino Game
+var cpuNum = 0
 
 
 
